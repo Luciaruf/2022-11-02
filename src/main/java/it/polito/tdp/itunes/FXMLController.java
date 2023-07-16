@@ -5,9 +5,17 @@
 package it.polito.tdp.itunes;
 
 import java.net.URL;
+import java.util.List;
 import java.util.ResourceBundle;
+import java.util.Set;
 
+import org.jgrapht.Graph;
+import org.jgrapht.graph.DefaultEdge;
+import org.jgrapht.graph.SimpleGraph;
+
+import it.polito.tdp.itunes.model.Genre;
 import it.polito.tdp.itunes.model.Model;
+import it.polito.tdp.itunes.model.Track;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
@@ -18,6 +26,7 @@ import javafx.scene.control.TextField;
 public class FXMLController {
 
 	private Model model;
+	Graph<Track, DefaultEdge> graph;
 	
     @FXML // ResourceBundle that was given to the FXMLLoader
     private ResourceBundle resources;
@@ -32,7 +41,7 @@ public class FXMLController {
     private Button btnPlaylist; // Value injected by FXMLLoader
 
     @FXML // fx:id="cmbGenere"
-    private ComboBox<?> cmbGenere; // Value injected by FXMLLoader
+    private ComboBox<Genre> cmbGenere; // Value injected by FXMLLoader
 
     @FXML // fx:id="txtDTOT"
     private TextField txtDTOT; // Value injected by FXMLLoader
@@ -53,7 +62,35 @@ public class FXMLController {
 
     @FXML
     void doCreaGrafo(ActionEvent event) {
-
+    	this.graph = new SimpleGraph<>(DefaultEdge.class);
+    	
+    	int genreId = this.cmbGenere.getValue().getGenreId();
+    	
+    	String minTxt = this.txtMin.getText();
+    	String maxTxt = this.txtMax.getText();
+    	
+    	int min = 0;
+    	int max = 0;
+    	
+    	try {
+    		min = Integer.parseInt(minTxt);
+    		max = Integer.parseInt(maxTxt);
+    		
+    		this.graph = this.model.creaGrafo(genreId, min, max);
+    		txtResult.appendText("#VERTICI: "+this.graph.vertexSet().size()+"\n"+ "#ARCHI: "+this.graph.edgeSet().size());
+    		
+    		List<Set<Track>> lista = this.model.calcolaConnessa();
+			for(Set<Track> s: lista) {
+				Track t = s.iterator().next();
+				this.txtResult.appendText("\nComponente connessa con: " + s.size()+" vertici, inseriti in "+ this.model.getPlaylistByTrack(t.getTrackId()) + " playlist. \n" );
+			}
+    		
+    		
+    	}catch(NumberFormatException e) {
+    		txtResult.appendText("valori errati");
+    	}
+    	
+    	
     }
 
     @FXML // This method is called by the FXMLLoader when initialization is complete
@@ -70,6 +107,8 @@ public class FXMLController {
     
     public void setModel(Model model) {
     	this.model = model;
+    	
+    	this.cmbGenere.getItems().addAll(this.model.genreAlfabetico());
     }
 
 }

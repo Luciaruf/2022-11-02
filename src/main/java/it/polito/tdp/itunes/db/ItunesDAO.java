@@ -138,7 +138,85 @@ public class ItunesDAO {
 		}
 		return result;
 	}
+	
+	public List<Genre> genreAlfabetico(){
+		final String sql = "SELECT DISTINCT g.* "
+				+ "FROM genre g "
+				+ "ORDER BY g.`Name` ASC ";
+		List<Genre> result = new LinkedList<>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			ResultSet res = st.executeQuery();
 
+			while (res.next()) {
+				result.add(new Genre(res.getInt("GenreId"), res.getString("Name")));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
+	
+	public List<Track> getVertices(int genreId, int min, int max){
+		String sql = "SELECT t.* "
+				+ "FROM track t "
+				+ "WHERE t.`GenreId` = ? "
+				+ "AND t.`Milliseconds`/1000> ? "
+				+ "AND t.`Milliseconds`/1000<= ? ";
+		
+		List<Track> result = new ArrayList<Track>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, genreId);
+			st.setInt(2, min);
+			st.setInt(3, max);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new Track(res.getInt("TrackId"), res.getString("Name"), 
+						res.getString("Composer"), res.getInt("Milliseconds"), 
+						res.getInt("Bytes"),res.getDouble("UnitPrice")));
+			
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
+
+	public List<Playlist> getPlaylistByTrack(int trackId){
+		String sql = "SELECT DISTINCT p.`PlaylistId`, p.`Name` "
+				+ "FROM playlisttrack pt, playlist p "
+				+ "WHERE pt.`PlaylistId`= p.`PlaylistId` "
+				+ "AND pt.`TrackId`= ? ";
+		List<Playlist> result = new LinkedList<>();
+		
+		try {
+			Connection conn = DBConnect.getConnection();
+			PreparedStatement st = conn.prepareStatement(sql);
+			st.setInt(1, trackId);
+			ResultSet res = st.executeQuery();
+
+			while (res.next()) {
+				result.add(new Playlist(res.getInt("PlaylistId"), res.getString("Name")));
+			}
+			conn.close();
+		} catch (SQLException e) {
+			e.printStackTrace();
+			throw new RuntimeException("SQL Error");
+		}
+		return result;
+	}
+	
+	
 	
 	
 }
